@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    // Impostiamo un timeout di sicurezza per non bloccare il server
-    options {
-        timeout(time: 10, unit: 'MINUTES')
-    }
-
     // Usiamo la versione di Go che abbiamo configurato negli strumenti
     tools {
         go 'go-1.26'
