@@ -4,6 +4,7 @@ pipeline {
     // Usiamo la versione di Go che abbiamo configurato negli strumenti
     tools {
         go 'go-1.26'
+        docker 'docker-latest'
     }
 
     environment {
