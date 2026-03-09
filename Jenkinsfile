@@ -1,20 +1,20 @@
 pipeline {
-    agent none  // nessun agent globale
+    agent none  
 
     stages {
 
         stage('Build Go') {
-            agent { label 'golang' } // usa l'agent Go
+            agent { label 'jenkins-agent-golang' } 
             steps {
                 echo "Building Go application..."
                 sh 'go version'
-                sh 'go mod download'
+                sh 'go mod tidy'
                 sh 'go build -o app'
             }
         }
 
         stage('Test Go') {
-            agent { label 'golang' }
+            agent { label 'jenkins-agent-golang' }
             steps {
                 echo "Running Go tests..."
                 sh 'go test ./...'
@@ -22,7 +22,7 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent { label 'docker' } // usa l'agent Docker
+            agent { label 'jenkins-agent-docker' } 
             steps {
                 echo "Building Docker image..."
                 sh 'docker build -t my-go-app:latest .'
@@ -30,11 +30,10 @@ pipeline {
         }
 
         stage('Run Docker Container') {
-            agent { label 'docker' }
+            agent { label 'jenkins-agent-docker' }
             steps {
                 echo "Running Docker container..."
                 sh '''
-                    # Rimuove eventuali container esistenti
                     docker rm -f my-go-app || true
                     docker run --rm -d --name my-go-app -p 8081:8080 my-go-app:latest
                 '''
