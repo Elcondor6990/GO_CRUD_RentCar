@@ -1,53 +1,50 @@
 pipeline {
-    agent any
-
-    // Usiamo la versione di Go che abbiamo configurato negli strumenti
-    tools {
-        go 'go-1.26'
-        dockerTool 'docker-latest'
-    }
-
-    environment {
-        // Nome che verrà dato all'immagine finale
-        NOME_IMMAGINE = 'mia-api-go'
-        GO111MODULE = 'on'
-    }
+    agent none  // nessun agent globale
 
     stages {
 
-        stage('Esecuzione Test') {
+        stage('Build Go') {
+            agent { label 'golang' } // usa l'agent Go
             steps {
-                echo 'Avvio dei test unitari...'
-                sh 'go test -v ./...'
+                echo "Building Go application..."
+                sh 'go version'
+                sh 'go mod download'
+                sh 'go build -o app'
             }
         }
 
-        stage('Build Immagine Docker') {
+        stage('Test Go') {
+            agent { label 'golang' }
             steps {
-                echo 'Creazione dell immagine Docker tramite il Dockerfile...'
-                sh "docker build -t ${NOME_IMMAGINE}:latest ."
+                echo "Running Go tests..."
+                sh 'go test ./...'
             }
         }
 
-        stage('Test Container') {
+        stage('Build Docker Image') {
+            agent { label 'docker' } // usa l'agent Docker
             steps {
-                bat '''
-                    docker run --rm ^
-                    -p 3000:3000 ^
-                    -e MONGO_URI="mongodb://root:pass@mongo:27017/?authSource=admin" ^
-                    -e MONGO_DB_NAME="rent_car_crud" ^
-                    ${NOME_IMMAGINE}:latest
+                echo "Building Docker image..."
+                sh 'docker build -t my-go-app:latest .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            agent { label 'docker' }
+            steps {
+                echo "Running Docker container..."
+                sh '''
+                    # Rimuove eventuali container esistenti
+                    docker rm -f my-go-app || true
+                    docker run --rm -d --name my-go-app -p 8081:8080 my-go-app:latest
                 '''
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline completata con successo! L immagine Docker è pronta.'
-        }
-        failure {
-            echo 'La pipeline è fallita. Controlla il Console Output per i dettagli.'
+        always {
+            echo 'Pipeline finished'
         }
     }
 }
