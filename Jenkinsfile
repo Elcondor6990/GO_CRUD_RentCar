@@ -39,6 +39,17 @@ pipeline {
                 '''
             }
         }
+
+        stage('Kubectl Test') {
+            agent { label 'kubectl-agent' }
+            steps {
+                script {
+                    sh 'ls -l $KUBECONFIG'
+                    sh 'kubectl cluster-info'
+                    sh 'kubectl get nodes'
+                }
+            }
+        }
     }
 
     post {
